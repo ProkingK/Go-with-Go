@@ -1,19 +1,15 @@
 package main
 
 import (
-    "net/http"
-
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
+	"go-server/internal/handlers"
 )
 
 func main() {
     router := gin.Default()
 
-    router.GET("/", greet)
+    router.GET("/board", handlers.GetBoard)
+    router.POST("/move", handlers.PostMove)
 
     router.Run(":8080")
-}
-
-func greet(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{"message": "Hello from Go server"})
 }
