@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 
 import Board from '@/components/Board';
 import { useParams } from 'next/navigation';
@@ -11,17 +12,16 @@ export default function GamePage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [game, setGame] = useState<Game | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchGame() {
       try {
         const data = await getGame(id as string);
-
         setGame(data);
-        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch game');
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to fetch game'
+        );
       }
     }
 
@@ -31,27 +31,26 @@ export default function GamePage() {
   async function handleMove(x: number, y: number) {
     if (!game || isLoading) return;
 
-    console.log(error);
-
     try {
       setIsLoading(true);
       const updatedGame = await makeMove(game.id, { x, y });
       setGame(updatedGame);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to make move');
+      toast.error(err instanceof Error ? err.message : 'Failed to make move');
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className='relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 p-8 overflow-hidden'>
+    <div className='relative min-h-screen flex flex-col items-center bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 p-8 overflow-hidden'>
+      <Toaster position='top-center' toastOptions={{ duration: 1000 }} />
       <div className='absolute inset-0 bg-gradient-to-br from-yellow-300 to-orange-400 opacity-40 animate-pulse-gradient'></div>
 
       {game ? (
         <>
-          <div className='text-center mb-8 z-10'>
-            <h1 className='text-4xl font-bold mb-3 text-gray-800 tracking-wide'>
+          <div className='text-center mb-4 z-10'>
+            <h1 className='text-4xl font-bold mb-2 text-gray-800 tracking-wide'>
               Game: {game.id}
             </h1>
 

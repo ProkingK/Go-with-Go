@@ -21,20 +21,21 @@ const (
 )
 
 type Game struct {
-	mu    sync.RWMutex
-	ID    string   `json:"id"`
-	Turn  Stone    `json:"turn"`
-	Mode  GameMode `json:"mode"`
-	Score Score    `json:"score"`
-	Board *Board   `json:"board"`
+	prevBoard *Board
+	mu        sync.RWMutex
+	ID        string   `json:"id"`
+	Turn      Stone    `json:"turn"`
+	Mode      GameMode `json:"mode"`
+	Score     Score    `json:"score"`
+	Board     *Board   `json:"board"`
 }
 
 type Board struct {
-	Size int   `json:"size"`
+	Size int     `json:"size"`
 	Grid []Stone `json:"grid"`
 }
 
 type Score struct {
-	Black uint8 `json:"black"`
-	White uint8 `json:"white"`
+	Black int `json:"black"`
+	White int `json:"white"`
 }
