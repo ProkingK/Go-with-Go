@@ -1,41 +1,40 @@
 package game
 
-type Player int
+import (
+	"sync"
+)
+
+type Stone uint8
 
 const (
-	None Player = iota
+	None Stone = iota
 	Black
 	White
 )
 
+type GameMode string
+
+const (
+	AI          GameMode = "ai"
+	Local       GameMode = "local"
+	Multiplayer GameMode = "multiplayer"
+)
+
+type Game struct {
+	mu    sync.RWMutex
+	ID    string   `json:"id"`
+	Turn  Stone    `json:"turn"`
+	Mode  GameMode `json:"mode"`
+	Score Score    `json:"score"`
+	Board *Board   `json:"board"`
+}
+
 type Board struct {
-	Size int
-	Turn Player
-	Grid [][]Player
+	Size uint8   `json:"size"`
+	Grid []Stone `json:"grid"`
 }
 
-func NewBoard(size int) *Board {
-	grid := make([][]Player, size)
-
-	for i := range grid {
-		grid[i] = make([]Player, size)
-	}
-
-	return &Board{
-		Size: size,
-		Grid: grid,
-		Turn: Black,
-	}
-}
-
-func (b *Board) PlaceStone(x, y int) (bool, string) {
-	if b.Grid[y][x] != None {
-		return false, "Position already occupied"
-	}
-
-	b.Grid[y][x] = b.Turn
-	
-	b.Turn = 3 - b.Turn
-
-	return true, "Added stone successfully"
+type Score struct {
+	Black uint8 `json:"black"`
+	White uint8 `json:"white"`
 }

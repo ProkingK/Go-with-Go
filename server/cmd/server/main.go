@@ -1,21 +1,18 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-    "github.com/gin-contrib/cors"
-	"go-server/internal/handlers"
+	"go-server/internal/api"
+	"go-server/internal/config"
+	"log"
 )
 
 func main() {
-    router := gin.Default()
+	cfg := config.NewConfig()
 
-    config := cors.DefaultConfig()
-    config.AllowOrigins = []string{"http://localhost:3000"}
+	router := api.SetupRouter(cfg)
 
-    router.Use(cors.New(config))
-
-    router.GET("/board", handlers.GetBoard)
-    router.POST("/move", handlers.PostMove)
-
-    router.Run(":8080")
+	log.Printf("Starting server on port %s", cfg.Port)
+	if err := router.Run(cfg.Port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
