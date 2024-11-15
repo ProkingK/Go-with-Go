@@ -13,7 +13,7 @@ export default function Game() {
     try {
       setIsLoading(true);
       const game = await createGame(request);
-      console.log('GAME', game)
+      console.log('GAME', game);
       router.push(`/game/${game.id}`);
     } catch (error) {
       console.error('Failed to create game:', error);
@@ -29,7 +29,7 @@ export default function Game() {
           Choose a mode
         </h1>
 
-        <div className='flex flex-col items-center space-y-4'>
+        <div className='flex flex-col items-center space-y-4 '>
           <label
             htmlFor='board-size'
             className='text-white text-lg font-semibold'
@@ -37,33 +37,57 @@ export default function Game() {
             Select Board Size
           </label>
 
-          <select
-            id='board-size'
-            value={boardSize}
-            onChange={(e) => setBoardSize(Number(e.target.value))}
-            className='px-4 py-2 text-lg rounded-lg bg-white text-gray-700 shadow-md'
-          >
-            <option value={9}>9 x 9</option>
-            <option value={13}>13 x 13</option>
-            <option value={19}>19 x 19</option>
-          </select>
+          <div className='flex space-x-4 p-4 rounded-xl bg-amber-500 shadow-amber-500/50 border-amber-400/20'>
+            <button
+              onClick={() => setBoardSize(9)}
+              className={`px-4 py-2 text-lg rounded-lg shadow-md ${
+                boardSize === 9
+                  ? 'bg-white text-gray-700'
+                  : 'bg-gray-300 text-gray-500'
+              }`}
+            >
+              9 x 9
+            </button>
+
+            <button
+              onClick={() => setBoardSize(13)}
+              className={`px-4 py-2 text-lg rounded-lg shadow-md ${
+                boardSize === 13
+                  ? 'bg-white text-gray-700'
+                  : 'bg-gray-300 text-gray-500'
+              }`}
+            >
+              13 x 13
+            </button>
+
+            <button
+              onClick={() => setBoardSize(19)}
+              className={`px-4 py-2 text-lg rounded-lg shadow-md ${
+                boardSize === 19
+                  ? 'bg-white text-gray-700'
+                  : 'bg-gray-300 text-gray-500'
+              }`}
+            >
+              19 x 19
+            </button>
+          </div>
         </div>
 
         <div className='flex flex-col p-4 items-center'>
           <button
             disabled={isLoading}
             onClick={() => handleCreateGame({ size: boardSize, mode: 'local' })}
-            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+            className='w-full max-w-xs px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
           >
             Local
           </button>
 
-          <button
+          {/* <button
             disabled
             onClick={() =>
               handleCreateGame({ size: boardSize, mode: 'online' })
             }
-            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+            className='w-full max-w-xs px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
           >
             Online
           </button>
@@ -71,10 +95,10 @@ export default function Game() {
           <button
             disabled
             onClick={() => handleCreateGame({ size: boardSize, mode: 'ai' })}
-            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+            className='w-full max-w-xs px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
           >
             Computer
-          </button>
+          </button> */}
         </div>
       </div>
     </main>
