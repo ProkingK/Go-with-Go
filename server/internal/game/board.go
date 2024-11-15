@@ -5,14 +5,14 @@ import (
 )
 
 type Move struct {
-	X uint8 `json:"x" binding:"required"`
-	Y uint8 `json:"y" binding:"required"`
+	X int `json:"x" binding:"required"`
+	Y int `json:"y" binding:"required"`
 }
 
-func NewBoard(size uint8) *Board {
+func NewBoard(size int) *Board {
 	return &Board{
 		Size: size,
-		Grid: make([]Stone, size*size),
+		Grid: make([]Stone, uint16(size)*uint16(size)),
 	}
 }
 

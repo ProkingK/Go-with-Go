@@ -1,13 +1,21 @@
+'use client';
+
 import Stone from './Stone';
 
-type BoardProps = {
+interface BoardProps {
   size: number;
-  grid: number[][];
+  grid: Stone[];
+  isLoading?: boolean;
   onIntersectionClick: (x: number, y: number) => void;
-};
+}
 
 export default function Board({ size, grid, onIntersectionClick }: BoardProps) {
   const cellSize = 30;
+
+  const getCoordinates = (index: number) => ({
+    x: index % size,
+    y: Math.floor(index / size)
+  });
 
   return (
     <svg
@@ -36,7 +44,6 @@ export default function Board({ size, grid, onIntersectionClick }: BoardProps) {
           />
         </g>
       ))}
-
       <line
         x1={cellSize}
         y1={(size + 1) * cellSize}
@@ -68,31 +75,30 @@ export default function Board({ size, grid, onIntersectionClick }: BoardProps) {
       )}
 
       {/* Stones */}
-      {grid.map((row, y) =>
-        row.map((cell, x) => {
-          if (cell === 0) return null; // Empty cell
-          const color = cell === 1 ? 'black' : 'white';
-
-          return (
-            <g
-              key={`stone-${x}-${y}`}
-              transform={`translate(${cellSize * (x + 1)}, ${
-                cellSize * (y + 1)
-              })`}
-              onClick={() => onIntersectionClick(x, y)}
-              className='cursor-pointer'
-            >
-              <Stone color={color} size={cellSize * 0.9} />
-            </g>
-          );
-        })
-      )}
+      {grid.map((cell, index) => {
+        if (cell === 0) return null; // Empty cell
+        const { x, y } = getCoordinates(index);
+        const color = cell === 1 ? 'black' : 'white';
+        return (
+          <g
+            key={`stone-${index}`}
+            transform={`translate(${cellSize * (x + 1)}, ${
+              cellSize * (y + 1)
+            })`}
+            onClick={() => onIntersectionClick(x, y)}
+            className='cursor-pointer'
+          >
+            <Stone color={color} size={cellSize * 0.9} />
+          </g>
+        );
+      })}
 
       {/* Clickable intersections */}
-      {grid.map((row, y) =>
-        row.map((_, x) => (
+      {grid.map((_, index) => {
+        const { x, y } = getCoordinates(index);
+        return (
           <rect
-            key={`rect-${x}-${y}`}
+            key={`rect-${index}`}
             x={cellSize * (x + 0.5)}
             y={cellSize * (y + 0.5)}
             width={cellSize}
@@ -101,8 +107,8 @@ export default function Board({ size, grid, onIntersectionClick }: BoardProps) {
             className='cursor-pointer'
             onClick={() => onIntersectionClick(x, y)}
           />
-        ))
-      )}
+        );
+      })}
     </svg>
   );
 }

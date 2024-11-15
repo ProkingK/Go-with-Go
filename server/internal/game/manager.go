@@ -16,7 +16,7 @@ func NewGameManager() *GameManager {
 	}
 }
 
-func (gm *GameManager) NewGame(size uint8, mode GameMode) (*Game, error) {
+func (gm *GameManager) NewGame(size int, mode GameMode) (*Game, error) {
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
 

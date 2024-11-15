@@ -5,8 +5,8 @@ import (
 	"math/big"
 )
 
-func (b *Board) ToIndex(x, y uint8) uint8 {
-	return y*uint8(b.Size) + x
+func (b *Board) ToIndex(x, y int) int {
+	return y*b.Size + x
 }
 
 func GenerateGameID(games map[string]*Game) string {

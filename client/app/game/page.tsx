@@ -1,84 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Board from '@/components/Board';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createGame } from '@/lib/services';
 
 export default function Game() {
-  const [grid, setGrid] = useState<number[][]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<'black' | 'white'>(
-    'black'
-  );
-  const [size, setSize] = useState<number>(19);
+  const router = useRouter();
+  const [boardSize, setBoardSize] = useState(19);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const fetchBoard = async () => {
+  async function handleCreateGame(request: CreateGameRequest) {
     try {
-      const response = await fetch('http://localhost:8080/board');
-      const data = await response.json();
-      const { Size, Turn, Grid } = data;
-
-      setGrid(Grid);
-      setSize(Size);
-      setCurrentPlayer(Turn === 1 ? 'black' : 'white');
+      setIsLoading(true);
+      const game = await createGame(request);
+      console.log('GAME', game)
+      router.push(`/game/${game.id}`);
     } catch (error) {
-      console.error('Error fetching board:', error);
+      console.error('Failed to create game:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchBoard();
-  }, []);
-
-  const handleIntersectionClick = async (x: number, y: number) => {
-    if (grid[y][x] !== 0) return;
-
-    try {
-      const response = await fetch('http://localhost:8080/move', {
-        method: 'POST',
-        body: JSON.stringify({ x, y }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Error: ${errorData.message}`);
-        return;
-      }
-
-      await fetchBoard();
-    } catch (error) {
-      console.error('Error making move:', error);
-    }
-  };
+  }
 
   return (
-    <div className='relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 p-8 overflow-hidden'>
-      <div className='absolute inset-0 bg-gradient-to-br from-yellow-300 to-orange-400 opacity-40 animate-pulse-gradient'></div>
-      <div className='absolute inset-0 pointer-events-none'>
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={i}
-            className='absolute w-16 h-16 bg-white bg-opacity-20 rounded-full blur-lg animate-float'
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${10 + Math.random() * 10}s`,
-              animationDelay: `${Math.random() * 5}s`
-            }}
-          ></div>
-        ))}
-      </div>
+    <main className='min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-300 via-orange-300 to-amber-400'>
+      <div className='text-center space-y-12 px-4 animate-fade-in'>
+        <h1 className='text-7xl font-bold text-white tracking-tight drop-shadow-lg'>
+          Choose a mode
+        </h1>
 
-      <h2 className='text-3xl font-semibold mb-6 text-gray-800 shadow-md backdrop-blur-sm bg-white/60 p-3 rounded-lg z-10'>
-        Current Turn: <span className='capitalize'>{currentPlayer}</span>
-      </h2>
+        <div className='flex flex-col items-center space-y-4'>
+          <label
+            htmlFor='board-size'
+            className='text-white text-lg font-semibold'
+          >
+            Select Board Size
+          </label>
 
-      <div className='bg-amber-100 p-4 rounded-3xl shadow-2xl ring-4 ring-yellow-300 ring-opacity-50 z-10'>
-        <Board
-          size={size}
-          grid={grid}
-          onIntersectionClick={handleIntersectionClick}
-        />
+          <select
+            id='board-size'
+            value={boardSize}
+            onChange={(e) => setBoardSize(Number(e.target.value))}
+            className='px-4 py-2 text-lg rounded-lg bg-white text-gray-700 shadow-md'
+          >
+            <option value={9}>9 x 9</option>
+            <option value={13}>13 x 13</option>
+            <option value={19}>19 x 19</option>
+          </select>
+        </div>
+
+        <div className='flex flex-col p-4 items-center'>
+          <button
+            disabled={isLoading}
+            onClick={() => handleCreateGame({ size: boardSize, mode: 'local' })}
+            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+          >
+            Local
+          </button>
+
+          <button
+            disabled
+            onClick={() =>
+              handleCreateGame({ size: boardSize, mode: 'online' })
+            }
+            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+          >
+            Online
+          </button>
+
+          <button
+            disabled
+            onClick={() => handleCreateGame({ size: boardSize, mode: 'ai' })}
+            className='px-10 py-4 mb-4 text-xl font-semibold rounded-xl bg-amber-500 text-white shadow-lg shadow-amber-500/50 hover:bg-amber-400 hover:scale-105 transition-all duration-300 border-2 border-amber-400/20'
+          >
+            Computer
+          </button>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

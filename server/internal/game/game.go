@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-type Stone uint8
+type Stone int
 
 const (
 	None Stone = iota
@@ -15,9 +15,9 @@ const (
 type GameMode string
 
 const (
-	AI          GameMode = "ai"
-	Local       GameMode = "local"
-	Multiplayer GameMode = "multiplayer"
+	AI     GameMode = "ai"
+	Local  GameMode = "local"
+	Online GameMode = "online"
 )
 
 type Game struct {
@@ -30,7 +30,7 @@ type Game struct {
 }
 
 type Board struct {
-	Size uint8   `json:"size"`
+	Size int   `json:"size"`
 	Grid []Stone `json:"grid"`
 }
 
