@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ func NewHandler(gm *game.GameManager) *Handler {
 }
 
 type CreateGameRequest struct {
-	Size  int         `json:"size" binding:"required,min=9,max=19"`
+	Size  int           `json:"size" binding:"required,min=9,max=19"`
 	Mode  game.GameMode `json:"mode" binding:"required,oneof=local multiplayer ai"`
 	Level string        `json:"level,omitempty" binding:"omitempty,oneof=easy medium hard"`
 }

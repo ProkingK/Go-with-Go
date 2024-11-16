@@ -1,16 +1,9 @@
 package game
 
-import (
-	"sync"
-)
-
-type Stone int
-
-const (
-	None Stone = iota
-	Black
-	White
-)
+type Score struct {
+	Black int `json:"black"`
+	White int `json:"white"`
+}
 
 type GameMode string
 
@@ -22,20 +15,9 @@ const (
 
 type Game struct {
 	prevBoard *Board
-	mu        sync.RWMutex
 	ID        string   `json:"id"`
 	Turn      Stone    `json:"turn"`
 	Mode      GameMode `json:"mode"`
 	Score     Score    `json:"score"`
 	Board     *Board   `json:"board"`
-}
-
-type Board struct {
-	Size int     `json:"size"`
-	Grid []Stone `json:"grid"`
-}
-
-type Score struct {
-	Black int `json:"black"`
-	White int `json:"white"`
 }

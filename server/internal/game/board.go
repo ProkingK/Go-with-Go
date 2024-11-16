@@ -2,11 +2,26 @@ package game
 
 import (
 	"errors"
+	"sync"
+)
+
+type Stone int
+
+const (
+	None Stone = iota
+	Black
+	White
 )
 
 type Move struct {
 	X int `json:"x" binding:"required"`
 	Y int `json:"y" binding:"required"`
+}
+
+type Board struct {
+	mu   sync.RWMutex
+	Size int     `json:"size"`
+	Grid []Stone `json:"grid"`
 }
 
 func NewBoard(size int) *Board {
@@ -16,65 +31,67 @@ func NewBoard(size int) *Board {
 	}
 }
 
-func (g *Game) PlaceStone(move Move) (*Game, error) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
+func (board *Board) PlaceStone(game *Game, move Move) (*Game, error) {
+	board.mu.Lock()
+	defer board.mu.Unlock()
 
-	idx := g.Board.ToIndex(move.X, move.Y)
+	idx := board.ToIndex(move.X, move.Y)
 
-	if g.Board.Grid[idx] != None {
+	if board.Grid[idx] != None {
 		return nil, errors.New("position already occupied")
 	}
 
-	g.Board.Grid[idx] = g.Turn
+	board.Grid[idx] = game.Turn
 
-	adjacents := g.Board.GetAdjacent(move.X, move.Y)
+	adjacents := board.GetAdjacent(move.X, move.Y)
 
 	// Check for suicide move
-	if !g.hasLiberties(move.X, move.Y) {
+	if !board.hasLiberties(move.X, move.Y) {
 		captured := false
 
 		for _, adj := range adjacents {
-			if g.Board.Grid[adj] == (3-g.Turn) && !g.hasLiberties(g.Board.ToCoord(adj)) {
+			if board.Grid[adj] == (3-game.Turn) && !board.hasLiberties(board.ToCoord(adj)) {
 				captured = true
-				g.captureGroup(g.Board.ToCoord(adj))
+				x, y := board.ToCoord(adj)
+				board.captureGroup(game, x, y)
 			}
 		}
 
 		if !captured {
-			g.Board.Grid[idx] = None
+			board.Grid[idx] = None
 			return nil, errors.New("suicide move not allowed")
 		}
 	}
 
 	// Capture any surrounded opponent groups
 	for _, adj := range adjacents {
-		if g.Board.Grid[adj] == (3-g.Turn) && !g.hasLiberties(g.Board.ToCoord(adj)) {
-			g.captureGroup(g.Board.ToCoord(adj))
+		if board.Grid[adj] == (3-game.Turn) && !board.hasLiberties(board.ToCoord(adj)) {
+			x, y := board.ToCoord(adj)
+			board.captureGroup(game, x, y)
 		}
 	}
 
 	// Check ko rule
-	if g.isKoViolation() {
-		g.Board.Grid[idx] = None
+	if board.isKoViolation(game) {
+		board.Grid[idx] = None
 		return nil, errors.New("ko rule violation")
 	}
 
 	// Save previous board state for ko rule checking
-	g.prevBoard = g.Board.Clone()
+	game.prevBoard = board.Clone()
 
-	g.Turn = 3 - g.Turn
+	game.Turn = 3 - game.Turn
 
-	return g, nil
+	return game, nil
 }
 
-func (g *Game) hasLiberties(x, y int) bool {
+func (board *Board) hasLiberties(x, y int) bool {
 	seen := make(map[int]bool)
-	return g.checkLiberties(x, y, seen)
+	return board.checkLiberties(x, y, seen)
 }
 
-func (g *Game) checkLiberties(x, y int, seen map[int]bool) bool {
-	idx := g.Board.ToIndex(x, y)
+func (board *Board) checkLiberties(x, y int, seen map[int]bool) bool {
+	idx := board.ToIndex(x, y)
 
 	if seen[idx] {
 		return false
@@ -82,17 +99,17 @@ func (g *Game) checkLiberties(x, y int, seen map[int]bool) bool {
 
 	seen[idx] = true
 
-	adjacents := g.Board.GetAdjacent(x, y)
+	adjacents := board.GetAdjacent(x, y)
 
 	for _, adj := range adjacents {
-		if g.Board.Grid[adj] == None {
+		if board.Grid[adj] == None {
 			return true
 		}
 
-		x, y := g.Board.ToCoord(adj)
+		x, y := board.ToCoord(adj)
 
-		if g.Board.Grid[adj] == g.Board.Grid[idx] {
-			if g.checkLiberties(x, y, seen) {
+		if board.Grid[adj] == board.Grid[idx] {
+			if board.checkLiberties(x, y, seen) {
 				return true
 			}
 		}
@@ -101,50 +118,84 @@ func (g *Game) checkLiberties(x, y int, seen map[int]bool) bool {
 	return false
 }
 
-func (g *Game) captureGroup(x, y int) {
-	color := g.Board.Grid[g.Board.ToIndex(x, y)]
+func (board *Board) captureGroup(game *Game, x, y int) {
+	color := board.Grid[board.ToIndex(x, y)]
 
 	captured := make(map[int]bool)
-	g.captureStones(x, y, color, captured)
+	board.captureStones(x, y, color, captured)
 
 	captureCount := len(captured)
 
-	if g.Turn == Black {
-		g.Score.Black += captureCount
+	if game.Turn == Black {
+		game.Score.Black += captureCount
 	} else {
-		g.Score.White += captureCount
+		game.Score.White += captureCount
 	}
 }
 
-func (g *Game) captureStones(x, y int, color Stone, captured map[int]bool) {
-	idx := g.Board.ToIndex(x, y)
+func (board *Board) captureStones(x, y int, color Stone, captured map[int]bool) {
+	idx := board.ToIndex(x, y)
 
-	if captured[idx] || g.Board.Grid[idx] != color {
+	if captured[idx] || board.Grid[idx] != color {
 		return
 	}
 
 	captured[idx] = true
-	g.Board.Grid[idx] = None
+	board.Grid[idx] = None
 
-	adjacents := g.Board.GetAdjacent(x, y)
+	adjacents := board.GetAdjacent(x, y)
 
 	for _, adj := range adjacents {
-		x, y := g.Board.ToCoord(adj)
-		g.captureStones(x, y, color, captured)
+		x, y := board.ToCoord(adj)
+		board.captureStones(x, y, color, captured)
 	}
 }
 
-func (g *Game) isKoViolation() bool {
-	if g.prevBoard == nil {
+func (board *Board) isKoViolation(game *Game) bool {
+	if game.prevBoard == nil {
 		return false
 	}
 
 	// Compare current board state with previous to detect ko
-	for i := range g.Board.Grid {
-		if g.Board.Grid[i] != g.prevBoard.Grid[i] {
+	for i := range board.Grid {
+		if board.Grid[i] != game.prevBoard.Grid[i] {
 			return false
 		}
 	}
 
 	return true
+}
+
+func (b *Board) ToIndex(x, y int) int {
+	return y*b.Size + x
+}
+
+func (b *Board) ToCoord(idx int) (int, int) {
+	return idx % b.Size, idx / b.Size
+}
+
+func (b *Board) Clone() *Board {
+	newGrid := make([]Stone, len(b.Grid))
+
+	copy(newGrid, b.Grid)
+
+	return &Board{
+		Size: b.Size,
+		Grid: newGrid,
+	}
+}
+
+func (b *Board) GetAdjacent(x, y int) []int {
+	adjacent := make([]int, 0, 4)
+	directions := [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+
+	for _, dir := range directions {
+		newX, newY := x+dir[0], y+dir[1]
+
+		if newX >= 0 && newX < b.Size && newY >= 0 && newY < b.Size {
+			adjacent = append(adjacent, b.ToIndex(newX, newY))
+		}
+	}
+
+	return adjacent
 }

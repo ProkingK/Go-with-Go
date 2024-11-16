@@ -1,7 +1,9 @@
 package game
 
 import (
+	"crypto/rand"
 	"errors"
+	"math/big"
 	"sync"
 )
 
@@ -20,7 +22,7 @@ func (gm *GameManager) NewGame(size int, mode GameMode) (*Game, error) {
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
 
-	id := GenerateGameID(gm.games)
+	id := gm.GenerateGameID()
 
 	game := &Game{
 		ID:    id,
@@ -53,5 +55,28 @@ func (gm *GameManager) MakeMove(id string, move Move) (*Game, error) {
 		return nil, errors.New("game not found")
 	}
 
-	return game.PlaceStone(move)
+	board := game.Board
+	game, err := board.PlaceStone(game, move)
+
+	return game, err
+}
+
+func (gm *GameManager) GenerateGameID() string {
+	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+	charLen := big.NewInt(int64(len(characters)))
+
+	for {
+		id := make([]byte, 5)
+
+		for i := 0; i < 5; i++ {
+			idx, _ := rand.Int(rand.Reader, charLen)
+			id[i] = characters[idx.Int64()]
+		}
+
+		generatedID := string(id)
+
+		if _, exists := gm.games[generatedID]; !exists {
+			return generatedID
+		}
+	}
 }
