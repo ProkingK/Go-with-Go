@@ -70,3 +70,27 @@ func (h *Handler) MakeMove(c *gin.Context) {
 
 	c.JSON(http.StatusOK, updatedGame)
 }
+
+func (h *Handler) Pass(c *gin.Context) {
+	id := c.Param("id")
+	updatedGame, err := h.gameManager.Pass(id)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedGame)
+}
+
+func (h *Handler) Resign(c *gin.Context) {
+	id := c.Param("id")
+	updatedGame, err := h.gameManager.Resign(id)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedGame)
+}

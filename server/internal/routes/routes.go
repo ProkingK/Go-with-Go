@@ -13,5 +13,7 @@ func RegisterRoutes(router *gin.Engine) {
 
 	router.POST("/game", h.CreateGame)
 	router.GET("/game/:id", h.GetGame)
+	router.POST("/game/:id/pass", h.Pass)
+	router.POST("/game/:id/resign", h.Resign)
 	router.POST("/game/:id/move", h.MakeMove)
 }

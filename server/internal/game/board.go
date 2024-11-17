@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"sync"
+	"fmt"
 )
 
 type Stone int
@@ -166,6 +167,99 @@ func (board *Board) isKoViolation(game *Game) bool {
 	return true
 }
 
+func (board *Board) calculateTerritories() []Territory {
+    territories := make([]Territory, len(board.Grid))
+    
+    // First pass: mark all stones
+    for i, stone := range board.Grid {
+        if stone != None {
+            territories[i] = Territory{Color: stone, IsTerritory: false}
+        }
+    }
+    
+    // Second pass: flood fill empty areas to determine territory
+    for i, stone := range board.Grid {
+        if stone == None && territories[i].Color == None {
+            x, y := board.ToCoord(i)
+            surrounded := make(map[int]bool)
+            owner := board.floodFillTerritory(x, y, surrounded)
+            
+            // Mark all points in the surrounded area
+            for idx := range surrounded {
+                territories[idx] = Territory{
+                    Color: owner,
+                    IsTerritory: owner != None,
+                }
+            }
+        }
+    }
+    
+    return territories
+}
+
+// floodFillTerritory determines if an empty area is surrounded by one color
+func (board *Board) floodFillTerritory(x, y int, seen map[int]bool) Stone {
+    idx := board.ToIndex(x, y)
+
+    if seen[idx] {
+        return None
+    }
+
+    seen[idx] = true
+    surroundingBlack := false
+    surroundingWhite := false
+    
+    adjacents := board.GetAdjacent(x, y)
+
+    for _, adj := range adjacents {
+        adjX, adjY := board.ToCoord(adj)
+        
+        if board.Grid[adj] == None {
+            owner := board.floodFillTerritory(adjX, adjY, seen)
+
+            if owner == Black {
+                surroundingBlack = true
+            } else if owner == White {
+                surroundingWhite = true
+            }
+        } else {
+            if board.Grid[adj] == Black {
+                surroundingBlack = true
+            } else {
+                surroundingWhite = true
+            }
+        }
+    }
+    
+    // Area is territory if it's surrounded by only one color
+    if surroundingBlack && !surroundingWhite {
+        return Black
+    } else if !surroundingBlack && surroundingWhite {
+        return White
+    }
+	
+    return None
+}
+
+func (board *Board) hasValidMovesRemaining(game *Game) bool {
+    for y := 0; y < board.Size; y++ {
+        for x := 0; x < board.Size; x++ {
+            if board.Grid[board.ToIndex(x, y)] == None {
+                move := Move{X: x, Y: y}
+
+                testBoard := board.Clone()
+                _, err := testBoard.PlaceStone(game.Clone(), move)
+
+                if err == nil {
+                    return true
+                }
+            }
+        }
+    }
+
+    return false
+}
+
 func (b *Board) ToIndex(x, y int) int {
 	return y*b.Size + x
 }
@@ -176,6 +270,8 @@ func (b *Board) ToCoord(idx int) (int, int) {
 
 func (b *Board) Clone() *Board {
 	newGrid := make([]Stone, len(b.Grid))
+
+	fmt.Println("Nden");
 
 	copy(newGrid, b.Grid)
 

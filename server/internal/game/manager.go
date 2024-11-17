@@ -49,16 +49,65 @@ func (gm *GameManager) MakeMove(id string, move Move) (*Game, error) {
 	gm.mu.Lock()
 	defer gm.mu.Unlock()
 
+	updatedGame, exists := gm.games[id]
+
+	if !exists {
+		return nil, errors.New("game not found")
+	}
+
+	if updatedGame.IsOver {
+		return nil, errors.New("game is already over")
+	}
+
+	updatedGame.PassCount = 0
+
+	board := updatedGame.Board
+	updatedGame, err := board.PlaceStone(updatedGame, move)
+
+	if updatedGame == nil {
+		return gm.games[id], err
+	}
+
+	if err != nil {
+		if !board.hasValidMovesRemaining(updatedGame) {
+			updatedGame.IsOver = true
+			updatedGame.calculateFinalScore()
+		}
+
+		return updatedGame, err
+	}
+
+	return updatedGame, nil
+}
+
+func (gm *GameManager) Pass(id string) (*Game, error) {
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
+
 	game, exists := gm.games[id]
 
 	if !exists {
 		return nil, errors.New("game not found")
 	}
 
-	board := game.Board
-	game, err := board.PlaceStone(game, move)
+	game = game.Pass()
 
-	return game, err
+	return game, nil
+}
+
+func (gm *GameManager) Resign(id string) (*Game, error) {
+	gm.mu.Lock()
+	defer gm.mu.Unlock()
+
+	game, exists := gm.games[id]
+
+	if !exists {
+		return nil, errors.New("game not found")
+	}
+
+	game = game.Resign()
+
+	return game, nil
 }
 
 func (gm *GameManager) GenerateGameID() string {
